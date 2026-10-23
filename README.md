@@ -25,6 +25,7 @@ Every number below was measured on this machine unless it says otherwise. Last u
 | OS | Ubuntu 26.04, kernel 7.0. BIOS VRAM carve-out set to 512 MB; the GPU gets ~116 GiB of shared memory (GTT) with no kernel parameters needed |
 | Inference | [Lemonade](https://lemonade-server.ai/) 2026.43 → llama.cpp b11796 (ROCm and Vulkan) · FastFlowLM 1.0.7 on the NPU |
 | Agents | OpenCode 2.1, Aider 0.86, Hermes Agent · code navigation via Serena and GitNexus (MCP) |
+| The repo | 74 MB source code · 2,863 tracked files |
 
 ## Getting started
 
