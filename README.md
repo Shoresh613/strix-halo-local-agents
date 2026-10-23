@@ -157,7 +157,7 @@ GLM-4.7-Flash Q8. Each request adds 2,048 new tokens on top of a cached history.
 
 Raising Qwen3.6's context to 256K and its output limit to 32K finally let it complete both the architecture review and a critical self-audit without a single compaction. Test B took **11m54s** and scored **6/12** on analysis quality. Test C took another **17m58s** and scored **8/12**. By the end, OpenCode reported **237,519 tokens in context (91%)**, with about 24.6K tokens left before the context limit.
 
-The self-audit was genuinely useful. I explicitly asked the model to use the available MCP servers, and it used Serena to trace symbol references rather than relying entirely on text searches. Several recommendations from B were withdrawn or substantially revised.
+The self-audit was genuinely useful. I explicitly asked the model to use the available MCP servers (Serena, GitNexus), and it used Serena to trace symbol references rather than relying entirely on text searches. Several recommendations from B were withdrawn or substantially revised.
 
 But the model still confused *no references found* with *safe to delete*, and continued to assign P0 priorities to removing Django models and splitting a large views file. Those conclusions needed more evidence than it had. The 8/12 score reflects a useful self-audit, not permission to apply its recommendations without review.
 
