@@ -1,0 +1,10 @@
+spec_draft_n_max,decode_tok_s,run,ctx_size,note
+1,68.5,1,65536,
+2,72.5,1,65536,
+3,80.6,1,65536,llama.cpp default
+3,81.2,2,65536,llama.cpp default
+3,80.7,3,131072,llama.cpp default; larger ctx allocated but chat was fresh
+4,67.9,1,65536,
+5,74.5,1,65536,
+6,69.2,1,65536,
+8,54.8,1,65536,

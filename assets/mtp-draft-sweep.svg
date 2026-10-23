@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" width="640" height="300" font-family="-apple-system, Segoe UI, Helvetica, Arial, sans-serif" role="img" aria-label="Decode speed by MTP draft length for Qwen3.6-35B-A3B on Strix Halo, ROCm">
+<style>
+.bg{fill:#fcfcfb}.t1{fill:#0b0b0b}.t2{fill:#52514e}.grid{stroke:#e4e3de}.base{stroke:#8a8983}.bar{fill:#b4b2a9}.best{fill:#2a78d6}
+@media (prefers-color-scheme: dark){.bg{fill:#1a1a19}.t1{fill:#ffffff}.t2{fill:#c3c2b7}.grid{stroke:#33332f}.base{stroke:#6b6a64}.bar{fill:#5f5e58}.best{fill:#3987e5}}
+</style>
+<rect class="bg" width="640" height="300" rx="8"/>
+<text class="t1" x="48" y="24" font-size="15" font-weight="600">Decode speed vs. MTP draft length (--spec-draft-n-max)</text>
+<text class="t2" x="48" y="42" font-size="12">Qwen3.6-35B-A3B-MTP UD-Q4_K_XL · Ryzen AI Max+ 395 · llama.cpp ROCm via Lemonade · tokens/s</text>
+<line class="grid" x1="48" x2="624" y1="248.0" y2="248.0"/>
+<text class="t2" x="40" y="252.0" font-size="11" text-anchor="end">0</text>
+<line class="grid" x1="48" x2="624" y1="209.6" y2="209.6"/>
+<text class="t2" x="40" y="213.6" font-size="11" text-anchor="end">20</text>
+<line class="grid" x1="48" x2="624" y1="171.2" y2="171.2"/>
+<text class="t2" x="40" y="175.2" font-size="11" text-anchor="end">40</text>
+<line class="grid" x1="48" x2="624" y1="132.8" y2="132.8"/>
+<text class="t2" x="40" y="136.8" font-size="11" text-anchor="end">60</text>
+<line class="grid" x1="48" x2="624" y1="94.4" y2="94.4"/>
+<text class="t2" x="40" y="98.4" font-size="11" text-anchor="end">80</text>
+<line class="grid" x1="48" x2="624" y1="56.0" y2="56.0"/>
+<text class="t2" x="40" y="60.0" font-size="11" text-anchor="end">100</text>
+<path class="bar" d="M77.1,248.0 V120.5 Q77.1,116.5 81.1,116.5 H97.1 Q101.1,116.5 101.1,120.5 V248.0 Z"><title>1 draft tokens: 68.5 tok/s</title></path>
+<text class="t1" x="89.1" y="110.5" font-size="12" text-anchor="middle">68.5</text>
+<text class="t2" x="89.1" y="266.0" font-size="12" text-anchor="middle">1</text>
+<path class="bar" d="M159.4,248.0 V112.8 Q159.4,108.8 163.4,108.8 H179.4 Q183.4,108.8 183.4,112.8 V248.0 Z"><title>2 draft tokens: 72.5 tok/s</title></path>
+<text class="t1" x="171.4" y="102.8" font-size="12" text-anchor="middle">72.5</text>
+<text class="t2" x="171.4" y="266.0" font-size="12" text-anchor="middle">2</text>
+<path class="best" d="M241.7,248.0 V97.1 Q241.7,93.1 245.7,93.1 H261.7 Q265.7,93.1 265.7,97.1 V248.0 Z"><title>3 draft tokens: 80.7 (n=3) tok/s</title></path>
+<text class="t1" x="253.7" y="87.1" font-size="12" text-anchor="middle" font-weight="600">80.7</text>
+<text class="t2" x="253.7" y="266.0" font-size="12" text-anchor="middle">3</text>
+<path class="bar" d="M324.0,248.0 V121.6 Q324.0,117.6 328.0,117.6 H344.0 Q348.0,117.6 348.0,121.6 V248.0 Z"><title>4 draft tokens: 67.9 tok/s</title></path>
+<text class="t1" x="336.0" y="111.6" font-size="12" text-anchor="middle">67.9</text>
+<text class="t2" x="336.0" y="266.0" font-size="12" text-anchor="middle">4</text>
+<path class="bar" d="M406.3,248.0 V109.0 Q406.3,105.0 410.3,105.0 H426.3 Q430.3,105.0 430.3,109.0 V248.0 Z"><title>5 draft tokens: 74.5 tok/s</title></path>
+<text class="t1" x="418.3" y="99.0" font-size="12" text-anchor="middle">74.5</text>
+<text class="t2" x="418.3" y="266.0" font-size="12" text-anchor="middle">5</text>
+<path class="bar" d="M488.6,248.0 V119.1 Q488.6,115.1 492.6,115.1 H508.6 Q512.6,115.1 512.6,119.1 V248.0 Z"><title>6 draft tokens: 69.2 tok/s</title></path>
+<text class="t1" x="500.6" y="109.1" font-size="12" text-anchor="middle">69.2</text>
+<text class="t2" x="500.6" y="266.0" font-size="12" text-anchor="middle">6</text>
+<path class="bar" d="M570.9,248.0 V146.8 Q570.9,142.8 574.9,142.8 H590.9 Q594.9,142.8 594.9,146.8 V248.0 Z"><title>8 draft tokens: 54.8 tok/s</title></path>
+<text class="t1" x="582.9" y="136.8" font-size="12" text-anchor="middle">54.8</text>
+<text class="t2" x="582.9" y="266.0" font-size="12" text-anchor="middle">8</text>
+<line class="base" x1="48" x2="624" y1="248.0" y2="248.0"/>
+<text class="t2" x="48" y="290" font-size="11">Draft tokens. 3 = median of 3 runs (80.6–81.2); others single runs; 7 not tested. Same prompt, fresh chat each run.</text>
+</svg>

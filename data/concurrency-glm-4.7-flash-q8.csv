@@ -1,0 +1,13 @@
+engine,cached_history_tokens,streams,ttft_s,decode_tok_s_per_stream
+rocm,32768,1,22.95,23.87
+rocm,32768,2,87.5,9.9
+vulkan,32768,1,19.29,21.53
+vulkan,32768,2,41.9,3.23
+rocm,65536,1,47.96,9.28
+rocm,65536,2,196.5,4.33
+vulkan,65536,1,41.98,12.48
+vulkan,65536,2,84.2,1.52
+rocm,131072,1,96.97,6.08
+rocm,131072,2,376.8,2.4
+vulkan,131072,1,78.36,5.75
+vulkan,131072,2,170.0,0.82
