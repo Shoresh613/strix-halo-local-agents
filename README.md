@@ -183,7 +183,7 @@ I wouldn't call this evidence that the model somehow forgot its own corrections.
 
 GitNexus was available in the environment, but the visible tool history confirms Serena use rather than a meaningful GitNexus-assisted analysis.
 
-**My takeaway: MCP improves what the agent can find, not necessarily what it can prove.** Serena helped it navigate symbols and recover project context. The model still had to decide whether a missing reference meant dead code, whether two implementations were accidental duplication, and whether a proposed architectural change was worth the risk. Those decisions were where it stumbled.
+**My takeaway: MCP improves what the agent can find, not necessarily what it can prove or how well it thinks.** Serena helped it navigate symbols and recover project context. The model still had to decide whether a missing reference meant dead code, whether two implementations were accidental duplication, and whether a proposed architectural change was worth the risk. Those decisions were where it stumbled.
 
 In the shorter-context runs, the failure mode was always the same. The context filled up, either with source code or with search results. The agent compressed its history (compaction) and then went back to read material it had already seen. In the coding runs, 17–42% of the lines it read were repeats, and in 32K runs 74–81% of its output went into summarizing its own history. It ran out of time before writing anything up. Symbol-level navigation (Serena) cut the raw reading by 60–80%, but agents still didn't finish. Tool schemas also take up a lot of context: GitNexus alone is 56K characters.
 
