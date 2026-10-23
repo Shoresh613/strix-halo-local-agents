@@ -14,7 +14,7 @@ Every number below was measured on this machine unless it says otherwise. Last u
 
 4. **Parallel agents share one memory bus.** Total throughput goes up while each agent slows down. Add long context and every agent drops to 1–4 tok/s.
 
-5. **Local agents are good at narrow tasks, not broad ones.** Single-file fixes passed every test in 50–110 s. Repo-wide reviews either took 4.5–51 minutes and made claims the models later retracted, or, with a 15-minute limit, never finished at all. Raising Qwen3.6 to 256K context finally got the review and self-audit done without compaction. A later MCP-assisted review also finished, but took nearly twice as long and scored the same **6/12**. More context solved one problem. Better code navigation didn't solve the judgment problem.
+5. **Local agents are good at narrow tasks, not broad ones.** Single-file fixes passed every test in 50–110 s. Repo-wide reviews either took 4.5–51 minutes and made claims the models later retracted, or, with a 15-minute limit, never finished at all. Raising Qwen3.6 to **256K context** finally got the review and self-audit done without compaction, showcasing the importance of a large context window. A later MCP-assisted review also finished, but took nearly twice as long and scored the same **6/12**. More context solved one problem. Better code navigation didn't solve the judgment problem.
 
 ## The rig
 
