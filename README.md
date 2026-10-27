@@ -1,41 +1,50 @@
 # Local coding agents on Strix Halo (128 GB): what actually works
 
-I've got a mini PC with an AMD Ryzen AI Max+ 395 and 128 GB of unified memory, and wanted to see how close I could get to a capable coding agent that runs entirely at home. I spent about a week throwing models, engines and agent frameworks at it. This page is what survived.
+I've got a mini PC with an AMD Ryzen AI Max+ 395 and 128 GB of unified memory, and wanted to see how close I could get to a capable coding agent that runs entirely at home. I spent over a week throwing models, engines and agent frameworks at it. This page is what survived.
 
-**Update, October 26, 2026:** The first version of this article concluded that large local models weren't worth the extra waiting time for coding-agent work. That was true of the models I'd tried. Then I found a quantization of Qwen3.8 Flash-Next that changed my mind. Apparently, the model I was wishing for already existed. I just hadn't downloaded it.
+**Update, October 26, 2026:** The first version concluded that large local models weren't worth the extra waiting time for coding-agent work. Then I discovered Qwen3.8 Flash-Next GSQ-RCO. Apparently, the model I was looking for already existed. I just hadn't downloaded it.
 
-**Spoiler alert:** Being able to run 181B-models, as opposed to only smaller ones, on your computer does help ;-)
+**Update, October 27, 2026:** I switched the machine to performance mode, tested IQ3_S alongside IQ2_XS, and tried Pi Coding Agent against OpenCode. Generation speeds almost doubled, the larger models became much more practical, and my original conclusion about memory bandwidth needed revisiting.
+
+**Spoiler alert:** Being able to run 181B-class models locally does help. And apparently, so does turning off low-power mode ;-)
 
 ## TL;DR
 
-The review results pair **B**, a source-backed architecture review, with **C**, a critical self-audit in the same session; the combined score is out of 24.
+1. **Small-active MoE + MTP remains the speed sweet spot.** Qwen3.6-35B-A3B-MTP reaches \~81 tok/s on short prompts, handles tools and images, supports 256K context, and fixes bounded bugs in about a minute. Its performance-mode agent median is **63.1 tok/s**.
 
-1. **Small-active MoE + multi-token prediction (MTP) is still the speed sweet spot.** Qwen3.6-35B-A3B-MTP runs at **~81 tok/s**, handles tool calls and images, keeps its full 256K context with memory to spare, and fixes a bounded bug in about a minute. It's my fast daily driver.
+2. **Bigger models deliver better architectural judgment.** Qwen3.8 Flash-Next IQ2_XS originally scored **20/24 in 57m32s** on a deep review and self-audit, versus Qwen3.6 medium's **14/24 in 29m52s**. New performance-mode tests scored **19/24** with both IQ2_XS and IQ3_S in OpenCode, and **20/24** with IQ3_S in Pi, all in less than 30 minutes.
 
-2. **A bigger model can deliver better judgment.** Qwen3.8 Flash-Next IQ2_XS (a whopping 181B!) at **medium thinking** gave the best balance in my reviews: **20/24 in 57m32s**, then **19/24 in 73m15s** in a second run, versus Qwen3.6 (35B) medium's **14/24 in 29m52s**. Low was surprisingly close (**18/24 in 54m29s**); high took **about 2h23m for 20/24**.
+3. **Performance mode changes the experience.** Qwen3.8 IQ2_XS's observed agent-generation median increased from **15.5 to 31.2 tok/s**. That isn't a controlled power-mode-only comparison, but it makes my earlier performance conclusions look decidedly pessimistic.
 
-3. **Bandwidth sets the speed, not memory size.** 128 GB lets you *load* a 120B+ model. 256 GB/s decides whether you'll still be interested by the time it answers.
+4. **Memory bandwidth matters, but isn't the whole story.** 128 GB determines which models fit. Effective bandwidth, GPU clocks, power limits and inference efficiency influence how fast they run. The same nominal 256 GB/s memory bus delivered very different observed speeds.
 
-4. **The NPU is about 5× slower than the iGPU** on the same model, while consuming about a quarter of the electricity per second. It's fine as a small helper and nothing more.
+5. **More quantization precision doesn't guarantee better results.** IQ3_S consumes substantially more memory than IQ2_XS, but both scored 19/24 in the new OpenCode tests.
 
-5. **Parallel agents share one memory bus.** Total throughput goes up while each agent slows down. Add long context and every agent drops to 1–4 tok/s.
-
-6. **Context solves memory problems; it doesn't guarantee sound conclusions.** Raising Qwen3.6 to 256K let it finish broad reviews without compaction. Serena improved navigation. Neither fixed its tendency to make questionable architectural claims. The larger Qwen3.8 model was noticeably better both at working and checking its own work. *256K context is a minimum for complex tasks to avoid compaction (and risk having to start over again)*.
+6. **Context helps agents finish; it doesn't guarantee good judgment.** Raising Qwen3.6 to 256K avoided compaction. Serena improved navigation. Neither eliminated questionable architectural conclusions. The best improvement came from using a stronger model and asking it to audit its own work.
 
 ## The rig
 
-| | |
-|---|---|
-| Price | 17,500 SEK (~$1,750) for the whole computer |
-| Machine | Ryzen AI Max+ 395 · Radeon 8060S iGPU (gfx1151) · XDNA 2 NPU · 128 GB LPDDR5X-8000, 256-bit (**256 GB/s** theoretical) |
-| OS | Ubuntu 26.04, kernel 7.0. BIOS VRAM carve-out set to 512 MB; the GPU gets ~116 GiB of shared memory (GTT) with no kernel parameters needed |
-| Inference | [Lemonade](https://lemonade-server.ai/) 2026.43 → llama.cpp b11796 (ROCm and Vulkan) · FastFlowLM 1.0.7 on the NPU |
-| Agents | OpenCode 2.1, Aider 0.86, Hermes Agent · code navigation via Serena and GitNexus (MCP) |
-| The repo | 74 MB source code · 2,863 tracked files in the original test snapshot |
+|                 |                                                                                              |
+| --------------- | -------------------------------------------------------------------------------------------- |
+| Price           | 17,500 SEK (\~$1,750) for the entire computer                                                |
+| Machine         | AMD Ryzen AI Max+ 395 · Radeon 8060S iGPU (gfx1151) · XDNA 2 NPU                             |
+| Memory          | 128 GB LPDDR5X-8000, 256-bit, 256 GB/s theoretical                                       |
+| OS              | Ubuntu 26.04, kernel 7.0                                                                     |
+| GPU memory      | 512 MB BIOS VRAM carve-out; approximately 116 GiB of shared GPU memory (GTT)                 |
+| Inference       | Lemonade → llama.cpp ROCm/Vulkan; FastFlowLM on NPU                                          |
+| Agents          | OpenCode 2, Pi Coding Agent, Aider, Hermes Agent                                     |
+| Navigation      | Serena and GitNexus (MCP)                                                                    |
+| Test repository | Django + React application, 74 MB of source and 2,863 tracked files in the original snapshot |
+
+The original B+C experiments used **low-power mode and OpenCode Build**. The October 27 experiments used **performance mode**, OpenCode 2.2.0 or Pi, and a development branch with ongoing changes.
+
+Those are different experimental conditions, not a clean before-and-after benchmark.
 
 ## How I tested
 
-Agent tests used a real Django + React codebase. **A** asked for a quick project summary; **B** demanded a source-backed architecture review tracing two complete UI → backend → UI flows; **C** asked the agent to audit its own review in the same session. The prompts below show B and C; wording varied between runs, including an explicit MCP instruction in the tool-assisted rerun.
+Agent tests used a real Django + React codebase.
+
+**A** asked for a quick project summary. **B** demanded a deep, source-backed architecture review tracing at least two complete UI → backend → UI execution flows. **C** asked the agent to challenge its own findings.
 
 <details>
 <summary>Test B — architecture review prompt</summary>
@@ -63,223 +72,344 @@ Do not modify any files.
 
 </details>
 
-**How I graded B and C:** Each report received 0–3 points on four criteria, for a maximum of **12**. For B: project understanding, completeness of two execution flows, source verification, and actionable recommendations. For C: following the audit task, evidence and counterevidence, self-correction, and revised recommendations. A zero means missing or fundamentally unsuccessful; three means strongly demonstrated.
+Later C runs used more explicit instructions to verify each finding, seek counterevidence and revise unsafe recommendations.
 
-These are **my subjective, one-off assessments of the agents' reports and visible logs**, not scores from an independently verified test suite. B+C totals are out of **24**. Serena availability, project memories and tool status varied between sessions, so this is an exploratory comparison rather than a controlled ranking. A one-point difference should not be treated as statistically meaningful.
+Each report received **0–3 points on four criteria**, for a maximum of 12. For B: project understanding, execution-flow completeness, source verification and actionable recommendations. For C: following the audit task, evidence and counterevidence, self-correction and revised recommendations.
 
-Everything ran in **Strix Halo low-power mode**, the B+C tests using the **OpenCode Build agent**. **The Plan agent was not tested** and could produce different results. Earlier controlled runs used frozen revisions, fixed prompts and time limits; later exploratory runs varied context settings, runtime flags, tool status and sometimes Git revisions.
+The combined score is out of **24**.
 
-## What I found
+These are subjective assessments of individual reports and visible tool histories, not independently verified correctness rates. Some runs also differed in tool availability, prompts and Git revision. A one-point difference is not statistically meaningful.
 
-### 1. The lineup and the bandwidth limit
+## 1. The model lineup
 
-Two speeds per model. *Short prompt* is a quick single request. *Agent median* is the median over every logged request of 100+ tokens in real agent sessions, where the context grows, so expect it to be lower. That median comes from llama.cpp's own timings in Lemonade's system log.
+Two speeds matter here:
 
-The Qwen3.8 medians use the October 24–25 journal sample, including exploratory requests and retries as well as scored B+C runs. Generation timings exclude prompt processing and tool time.
+- **Short-prompt speed:** A quick generation test with limited context.
+- **Agent-session speed:** Generation during real coding-agent work, with growing context, thinking tokens and tool interactions.
 
-| Model | Quant / size on disk | Short prompt tok/s | Generation in agent sessions (tok/s) | Verdict |
-|---|---|---:|---:|---|
-| **Qwen3.6-35B-A3B-MTP** | UD-Q4_K_XL, 22 GB | **81** (49 without MTP) | **34** median (837 requests) | My fast daily driver. Tool calls, images, 256K context |
-| GLM-4.7-Flash (30B-A3B) | Q4_K_M, ~18 GB | 70 (MTP off) | – ¹ | Fast, and also passes bounded fixes |
-| gpt-oss-120b | MXFP4, 59 GB (72 GB in use) | ~48 | 31 median (57) | Fast for its size, disappointing coding-agent tool calling |
-| Qwen3-Coder-Next (80B-A3B) | Q8_0 | – | 27 median (34) | Read thoroughly, then rejected most of its own findings when asked to audit them |
-| **Qwen3.8-Flash-Next GSQ-RCO (181B-A6B)** | **IQ2_XS, ~68 GB + MTP head + Vision head** | – | **15.5** journal median (385 responses) | **Best deep architecture-review result** |
-| **Qwen3.8-Flash-Next GSQ-RCO** | **Q2_0, ~66 GB + MTP head** | – | **10.6** journal median (200 responses) | Nearly as good, much slower in my agent runs |
-| Gemma-4-31B-it-MTP (dense) | ~19 GB | – | 26 median (28) | Used for image tasks, not tested as a coding agent |
-| MAI-Code-1.1-Flash | Q2-XS + DFlash drafter, 53 GB | – | 23 median (88) | Fits, but no better at finishing broad tasks |
-| Qwen3.8-Flash-Next, coder-pruned | IQ1_M, ~85 GB in RAM | 16–22 | 17 median (110) | Promising, but its deep review took **51 minutes** |
-| DeepSeek-V4-Flash | IQ2_XXS, 81 GB | – | 6 median (83) | Test B was still going after an hour, so I stopped it at 62 min |
-| Larger Qwen3.8 / GLM-5.3 variants | UD-Q4_K_XL / UD-Q2_K_XL | – | – | **These quantizations didn't fit in 128 GB** |
-| Qwen3.6-35B-A3B **on the NPU** (FastFlowLM) | – | 13–16 | 6 median (27) ² | ~5× slower than the iGPU. 30 s before the first token on a 7.6K-token prompt |
-| Qwen3.5-4B **on the NPU** | – | – | 43 median (20) | Fine as a narrow helper, with 4–6 s to the first token |
+The table below preserves the original **low-power** measurements. The agent figures are journal medians for requests generating at least 100 tokens.
 
-¹ GLM ran on a separate test server whose logs weren't kept. ² Partly measured while a GPU job ran at the same time.
+| Model                          | Quantization / size              | Short prompt tok/s | Agent median tok/s | Observation                                      |
+| ------------------------------ | -------------------------------- | -----------------: | -----------------: | ------------------------------------------------ |
+| **Qwen3.6-35B-A3B-MTP**        | UD-Q4_K_XL, 22 GB                |             **81** | **34** (837 calls) | Fast daily driver, tools, vision, 256K context   |
+| GLM-4.7-Flash (30B-A3B)        | Q4_K_M, \~18 GB                  |                 70 |                  — | Good bounded coding performance                  |
+| gpt-oss-120b                   | MXFP4, 59 GB                     |               \~48 |            31 (57) | Fast for its size; disappointing agent tool use  |
+| Qwen3-Coder-Next (80B-A3B)     | Q8_0                             |                  — |            27 (34) | Thorough reading; weak architectural conclusions |
+| **Qwen3.8 Flash-Next GSQ-RCO** | **IQ2_XS, \~68 GB + MTP/vision** |                  — |     **15.5** (385) | Best original deep-review result                 |
+| Qwen3.8 Flash-Next             | Q2_0, \~66 GB + MTP              |                  — |         10.6 (200) | Similar review quality, slower                   |
+| Gemma-4-31B-it-MTP             | \~19 GB                          |                  — |            26 (28) | Used for image tasks                             |
+| MAI-Code-1.1-Flash             | Q2-XS + DFlash, 53 GB            |                  — |            23 (88) | No improvement on broad reviews                  |
+| Qwen3.8 coder-pruned           | IQ1_M, \~85 GB in RAM            |              16–22 |           17 (110) | Deep review took 51 minutes                      |
+| DeepSeek-V4-Flash              | IQ2_XXS, 81 GB                   |                  — |             6 (83) | B stopped after 62 minutes                       |
+| Qwen3.6 on the NPU             | FastFlowLM                       |              13–16 |             6 (27) | Around 5× slower than the iGPU                   |
+| Qwen3.5-4B on the NPU          | FastFlowLM                       |                  — |            43 (20) | Useful as a small helper                         |
 
-Qwen3.8 has about **125B parameters in the main MoE, with roughly 6B active per token**, plus a **51.2B N-gram component**. The IQ2_XS setup's **~181B combined budget** also counts the separate MTP head and vision projector.
+The original Qwen3.8 figures came from the October 24–25 journal sample, including exploratory calls and retries as well as scored tests.
 
-**Why the big ones crawl:** generation speed depends heavily on *bytes read per token*. A dense 27B model at Q4 reads roughly 17 GB of weights for every token, which gives a theoretical bandwidth ceiling around 15 tok/s. A MoE model with 3B active parameters reads much less. Actual performance also depends on attention, caching, quantization kernels and the model's architecture.
+### Why Strix Halo is interesting
 
-**How fast is 256 GB/s, really?** Quite fast for a computer, slow for a graphics card:
+The attraction is memory capacity.
 
-| Computers (system memory) | Bandwidth |
-|---|---:|
-| Laptop/desktop, DDR4-3200 dual-channel | 51 GB/s |
-| Desktop, DDR5-6000 dual-channel | 96 GB/s |
-| Desktop, DDR5-8000 dual-channel | 128 GB/s |
-| MacBook Pro, M3 Pro | 150 GB/s |
-| **This box: Strix Halo, LPDDR5X-8000, 256-bit** | **256 GB/s** |
-| NVIDIA DGX Spark (GB10, 128 GB LPDDR5X) | 273 GB/s |
-| Mac Studio, M3 Ultra | 819 GB/s |
+Ordinary discrete GPUs can be much faster, but they typically have far less memory. Strix Halo gives the integrated GPU access to most of the machine's 128 GB unified-memory pool.
 
-| Graphics cards (VRAM) | Bandwidth |
-|---|---:|
-| RTX 4060 (8 GB) | 272 GB/s |
-| RTX 3060 (12 GB) | 360 GB/s |
-| RTX 4090 (24 GB) | 1,008 GB/s |
-| RTX 5090 (32 GB) | 1,792 GB/s |
+Its nominal bandwidth is **256 GB/s**, compared with approximately 1,008 GB/s for an RTX 4090 and 1,792 GB/s for an RTX 5090.
 
-Strix Halo has 2–5× the bandwidth of an ordinary PC, and roughly matches a budget graphics card, except with 116 GiB usable instead of 8–12 GB. NVIDIA's DGX Spark, the closest rival, is in the same league at 273 GB/s. A flagship card is 7× faster but holds only 32 GB. That's the trade: Strix Halo fits big models, and graphics cards run whatever fits on them fast.
+That is the trade-off: the Strix Halo can load much larger models than a typical consumer GPU, while a high-end card runs models that fit in its VRAM much faster.
 
-**So who is this box for?** Anyone who would rather run *big* models than *fast* ones. Being able to download a 120B+ model and just try it, with no cloud account and no juggling layers between GPU and RAM, is genuinely great. And the whole computer cost me 17,500 SEK (~$1,750), about a third of what an RTX 5090 *card alone* costs in Sweden right now (53,000–80,000 SEK new and ~50,000 used, October 2026).
+The large Qwen3.8 model is especially interesting because it is a Mixture-of-Experts architecture with roughly 6B active parameters per token, despite its much larger total parameter count.
 
-**Does a dedicated GPU dodge the problem?** Only halfway. If the whole model fits in the card's VRAM, the slow parts drop out: neither system RAM nor the PCIe link is involved while it generates. But once the model spills into system RAM, you're back to the slowest link in the chain, and on a normal PC that is far worse than Strix Halo. Strix Halo has no separate VRAM at all: GPU and CPU share the same 256 GB/s pool, which is how it fits very large models and also why it can't go faster.
+It also has a substantial **N-gram component**, which uses learned token-sequence lookups rather than simply adding more conventional neural computation.
 
-**Engines:** on GLM-4.7-Flash, llama.cpp with a GGUF Q4 quant managed 70 tok/s, against 7.7 for SGLang at BF16 and 6.7 for vLLM at BF16. Part of that gap is the lower precision, but on this box GGUF + llama.cpp is clearly the way to go.
+The result is a large model that can run on this hardware at useful, if not cloud-like, speeds.
 
-### 2. MTP: I tuned for an evening and landed on the default
+## 2. Performance mode: the biggest new finding
 
-MTP (multi-token prediction) lets the model guess a few tokens ahead and check them all in one pass. On Qwen3.6 it's free speed: **49 → 70 tok/s (+42%)** in a controlled probe (temperature 0, seed 42, 384 tokens), with 59–68% of guesses accepted.
+The original article was based almost entirely on low-power operation.
 
-![Decode speed vs MTP draft length](assets/mtp-draft-sweep.svg)
+On October 27, I collected new Lemonade telemetry while running performance-mode agent sessions.
 
-So naturally I tried to get more out of it. I swept `--spec-draft-n-max` from 1 to 8, and **3 won at ~81 tok/s**, steady within 0.6 tok/s over three runs. Going to 8 cost 32%. The value some guides recommend, 6, was 14% slower. And 3 is llama.cpp's default. A whole evening of tuning to confirm the default. I'll call it validation.
+### Observed generation speed
 
-**Why 3:** each extra guessed token is less likely to be accepted, and in a MoE model checking it also pulls in more experts, which costs bandwidth. After three, the extra cost outweighs the gain.
+| Model              | Low-power median | Performance median | Change |
+| ------------------ | ---------------: | -----------------: | -----: |
+| Qwen3.6 35B MTP    |         34 tok/s |     **63.1 tok/s** |   +86% |
+| Qwen3.8 IQ2_XS MTP |       15.5 tok/s |     **31.2 tok/s** |  +101% |
+| Qwen3.8 IQ3_S MTP  |                — |     **28.1 tok/s** |      — |
 
-I also tried `--spec-draft-p-min`, which makes the model stop guessing once it's unsure. The idea is to waste fewer guesses. With 3 draft tokens, every threshold I tried was slower than the default of 0:
+The performance-mode journal sample:
+
+| Model          | Calls | Output tokens | Mean tok/s | Median tok/s | Aggregate tok/s |
+| -------------- | ----: | ------------: | ---------: | -----------: | --------------: |
+| Qwen3.6 35B    |    59 |        16,441 |       62.6 |     **63.1** |            61.1 |
+| Qwen3.8 IQ2_XS |    61 |        21,880 |       30.2 |     **31.2** |            26.1 |
+| Qwen3.8 IQ3_S  |    59 |        35,571 |       28.1 |     **28.1** |            23.4 |
+
+*Aggregate speed = total output tokens divided by total generation time. The mean and median are calculated across individual calls.*
+
+The difference is substantial enough to change the practical assessment of the machine.
+
+Qwen3.8 at approximately **30 tok/s during agent work** feels very different from the same family at approximately 15 tok/s.
+
+## 3. MTP: I tuned for an evening and landed on the default
+
+MTP (multi-token prediction) lets a small draft head propose upcoming tokens that the main model can verify together.
+
+On Qwen3.6, it made a substantial difference.
+
+In a controlled probe with temperature 0, seed 42 and 384 output tokens, enabling MTP increased speed from **49 to 70 tok/s (+42%)**, with roughly 59–68% of proposed tokens accepted.
+
+
+
+I then tested draft lengths from 1 to 8.
+
+Three won at approximately **81 tok/s**, consistent across three runs. Increasing the draft length to eight made generation 32% slower. A length of six, recommended in some guides, was 14% slower than three.
+
+Three is also llama.cpp's default.
+
+An evening of tuning to confirm the default. I'll call that validation.
+
+I also tested `--spec-draft-p-min`, which stops speculative drafting when confidence falls:
 
 | p-min | 0 (default) | 0.10 | 0.60 | 0.75 | 0.90 |
-|---|---:|---:|---:|---:|---:|
-| tok/s | **80.7** | 73.2 | 56.8 | 61.9 | 53.4 |
+| ----- | ----------: | ---: | ---: | ---: | ---: |
+| tok/s |    **80.7** | 73.2 | 56.8 | 61.9 | 53.4 |
 
-With only three guesses there is little waste to cut, so stopping early mostly throws away tokens that would have been accepted. Score so far: llama.cpp defaults 2, me 0.
+Again, the default won.
 
-Two footnotes:
+MTP is however not universally beneficial. On GLM-4.7-Flash it reduced speed from **70 to 49 tok/s**.
 
-- **MTP isn't universally good.** On GLM-4.7-Flash it *cut* speed from 70 to 49 tok/s. Test it for each model.
-- Allocating 128K context instead of 64K made no difference while the chat was still short (80.7 vs 80.6–81.2 tok/s).
+And short-prompt speed is not what an agent sustains with a large context.
 
-### 3. Subagents: more hands, same narrow bus
+## 4. Parallel agents: more hands, same shared resources
 
-I wanted a team of agents working in parallel. The memory bus had other plans.
+I wanted several local agents working in parallel.
 
-GLM-4.7-Flash Q8. Each request adds 2,048 new tokens on top of a cached history. Two-stream figures are per stream, averaged over the two streams.
+The memory bus had other plans.
 
-| History | Engine | 1 stream: tok/s · first token | 2 streams: tok/s · first token |
-|---|---|---|---|
-| 32K | ROCm | 23.9 · 23 s | 9.9 · 88 s |
-| 64K | ROCm | 9.3 · 48 s | 4.3 · 197 s |
-| 128K | ROCm | 6.1 · 97 s | 2.4 · 377 s |
-| 64K | Vulkan | 12.5 · 42 s | 1.5 · 84 s |
+These original low-power measurements used GLM-4.7-Flash Q8, with each request adding 2,048 tokens to an existing context.
 
-- With short prompts, 8 parallel requests reached 166 tok/s *in total*. That's about 21 tok/s per agent, against 70 when one runs alone.
-- In a real OpenCode session, two subagents at 39K and 62K context crawled along at **0.9–1.3 tok/s**. Reading one 15K-token prompt took 267 s.
-- Even a single agent averaged only 30–35 tok/s in long Qwen sessions, less than half its short-prompt speed.
-- Neither backend wins everywhere. ROCm holds up better with two long streams, while Vulkan returns the first token faster.
+| Context | Backend | One stream: tok/s / first token | Two streams: tok/s per stream / first token |
+| ------- | ------- | ------------------------------- | ------------------------------------------- |
+| 32K     | ROCm    | 23.9 / 23 s                     | 9.9 / 88 s                                  |
+| 64K     | ROCm    | 9.3 / 48 s                      | 4.3 / 197 s                                 |
+| 128K    | ROCm    | 6.1 / 97 s                      | 2.4 / 377 s                                 |
+| 64K     | Vulkan  | 12.5 / 42 s                     | 1.5 / 84 s                                  |
 
-### 4. But does it get the job done?
+With short prompts, eight simultaneous requests achieved **166 tok/s in total**, approximately 21 tok/s per agent rather than 70 when running alone.
 
-Generation speed is only half the story. I tested bounded fixes, broad code reviews and a more general agent task.
+But in a real OpenCode session, two subagents at 39K and 62K context crawled at **0.9–1.3 tok/s**.
 
-| Task | What happened |
-|---|---|
-| **Bounded bug fix** (a regression reintroduced in one file) | Qwen3.6 + OpenCode: **50–90 s**, 3/3 public + 13/13 held-out tests. Aider: 95 s, pass. GLM-4.7-Flash: 112 s, pass. **This is where fast local agents shine.** |
-| **General agent** (scheduled Hermes task: web research, then write documents from the findings) | gpt-oss-120b reported success, but its links were stale or broken and it had misused its tools along the way. Qwen3.8-27B passed a small file and spreadsheet test, then spent **76 min and 45 model calls** on the real task without producing a single document, as its context grew from 12K to 119K tokens. Qwen3.6 on the NPU used its tools correctly but managed only ~6 tok/s, and its Swedish was clunky. |
+Long context also increased time to first token dramatically.
 
-#### The early reviews: convincing reports, weak evidence
+ROCm generally handled two long streams better than Vulkan in these experiments, although Vulkan sometimes returned the first token faster.
 
-| Review round | What happened |
-|---|---|
-| **Broad review, first round** (deep architecture review: trace two UI → backend → UI flows and list weaknesses; OpenCode 1.19, no time limit) | All three finished: gpt-oss-120b in **4.5 min**, Qwen3-Coder-Next 80B Q8 in ~9.5 min, Qwen3.8-Flash-Next IQ1_M in **51 min**. The reports read well but made unsupported claims. When Coder-Next was asked to audit its own report, it marked many of its findings as unsupported or overstated. |
-| **Broad review, controlled re-run** (frozen repo, OpenCode 2.x, 32–64K context, 15 min limit) | **No local run delivered a report on its own.** That includes Qwen3.6, with and without Serena or GitNexus and with serial subagents, plus MAI-Code, GLM-4.7-Flash and DeepSeek. When forced to stop and write up, Qwen scored 5.5/12 and GLM 4/12. On a related source-tracing task, gpt-oss-120b's report scored 0/12. As a comparison, a cloud frontier model (Sol 6.1) did the same review in 6 min and met all 8 rubric points. |
+Performance mode would likely improve these numbers, but the shared-resource trade-off remains. For my local workflows, serial or no subagents are usually easier to manage.
 
-The first round made A ("Quick summary of this project please") look easy: gpt-oss-120b finished in 53 seconds, Qwen3-Coder-Next in 54, and Qwen3.8 IQ1_M in 96. B exposed the differences: 4m31s, 9m23s and a painful 51m26s respectively. The most revealing result came from C: Qwen3-Coder-Next spent another 5m52s checking its own work, then admitted that many of its confidently presented architectural problems were unsupported or overstated. Alleged N+1 queries were already optimized, supposed security flaws were intentional design choices, and recommended refactors risked breaking existing functionality. The models were remarkably good at navigating a large codebase and producing convincing reports. **Actually proving their claims was another matter.**
+## 5. Can the agents actually finish useful work?
 
-In the shorter-context runs (32-64K), the failure mode was often the same. The context filled up, either with source code or with search results. The agent compressed its history (compaction) and then went back to read material it had already seen. In the coding runs, 17–42% of the lines it read were repeats, and in 32K runs 74–81% of its output went into summarizing its own history. It ran out of time before writing anything up. Symbol-level navigation (Serena) cut the raw reading by 60–80%, but agents still didn't finish. Tool schemas also take up a lot of context: GitNexus alone is 56K characters.
+Raw generation speed is only half the story.
 
-#### The 256K retest: compaction avoided, judgment still shaky
+### Bounded fixes: surprisingly good
 
-Raising Qwen3.6's context to 256K and its output limit to 32K finally let it finish B+C without compaction: **29m52s and 14/24** at medium thinking. By the end, OpenCode reported **237,519 tokens in context (91%)**, with about 24.6K tokens left.
+A deliberately reintroduced single-file regression was fixed by **Qwen3.6 + OpenCode in 50–90 seconds**, passing 3/3 public and 13/13 held-out tests.
 
-The self-audit was genuinely useful. I explicitly asked the model to use the available MCP servers (Serena, GitNexus), and it used Serena to trace symbol references rather than relying entirely on text searches. Several recommendations from B were withdrawn or substantially revised.
+Aider completed the same type of task in 95 seconds, and GLM-4.7-Flash in 112 seconds.
 
-But the model still confused *no references found* with *safe to delete*, and continued to assign P0 priorities to removing Django models and splitting a large views file. Those conclusions needed more evidence than it had. The 8/12 score reflects a useful self-audit, not permission to apply its recommendations without review.
+This is where small, fast local coding models shine.
 
-**So the larger context solved a real workflow problem, but not the judgment problem.** Qwen3.6 could now hold the complete B → C investigation without losing its history. That didn't make every conclusion trustworthy. It just gave the model a better opportunity to check its own work.
+### General autonomous tasks: less impressive
 
-#### The MCP rerun: better navigation, same score
+In a scheduled Hermes task involving web research and document creation, gpt-oss-120b reported success despite stale or broken links and incorrect tool use.
 
-I wanted to know whether explicit access to code-intelligence tools would make the initial architecture review more reliable. So I ran B again with one extra instruction: **use MCP servers when suitable**, as it didn't do it on its own in the first run of Task B.
+Another model spent **76 minutes and 45 calls** on the task without producing the requested document.
 
-This time Qwen3.6 started with Serena's instructions, tried symbol searches, and loaded persistent project memories. One of those memories, `project_navigation`, already contained a map of an execution flow. Some early Serena calls failed, but the model recovered and continued reading actual Python and TypeScript source files.
+The issue wasn't writing fluent text. It was reliably planning, executing and completing the workflow.
 
-Unfortunately, the report still made the kinds of mistakes I was hoping MCP would prevent. It earned **6/12**, exactly the same as the earlier 256K review.
+### Early broad reviews: convincing reports, weak evidence
 
-It was also slower: **22m46s versus 11m54s**. That's roughly 91% more wall-clock time, although I wouldn't attribute the difference to MCP alone. This wasn't a clean controlled A/B experiment. The later session loaded existing Serena project memories, its tool path differed, and it encountered a timeout and retry.
+In the initial architecture-review round:
 
-GitNexus was available in the environment, but the visible tool history confirms Serena use rather than a meaningful GitNexus-assisted analysis.
+| Model                      | Test B time |
+| -------------------------- | ----------: |
+| gpt-oss-120b               |       4m31s |
+| Qwen3-Coder-Next 80B Q8    |       9m23s |
+| Qwen3.8 coder-pruned IQ1_M |      51m26s |
 
-**My takeaway: MCP improves what the agent can find, not necessarily what it can prove or how well it thinks.** Serena helped it navigate symbols and recover project context. The model still had to decide whether a missing reference meant dead code, whether two implementations were accidental duplication, and whether a proposed architectural change was worth the risk. Those decisions were where it stumbled.
+The reports looked plausible, but contained unsupported architectural claims.
 
-#### The bigger model: an actual improvement
+The models were good at finding and describing code. Proving their conclusions was harder.
 
-Then I tested **Qwen3.8 Flash-Next GSQ-RCO IQ2_XS**, and finally got a different result.
+### The controlled short-context rerun
 
-It isn't very fast, but also not unusably slow. The journal sample gives a **15.5 tok/s median for generation alone**. Its first medium B+C run scored **20/24 in 57m32s**.
+I also tried broad reviews on a frozen repository revision, with OpenCode 2.x, 32K–64K context and a 15-minute limit.
 
-The improvement wasn't just more detail. It rechecked stale project memory against the current Git revision, traced the actual frontend/backend flows, and was more careful about distinguishing problems from deliberate compatibility decisions. In Test C it corrected source references, qualified security claims, and reconsidered recommendations that could break working code.
+**None of the local models completed the review independently within the limit.**
 
-That is what I had been missing. Qwen3.6 was quite good at finding code. Qwen3.8 was better at deciding what the findings *meant*.
+That included Qwen3.6 with and without code-navigation tools, MAI-Code, GLM-4.7-Flash and DeepSeek.
 
-I also tested the same model in **Q2_0**, a slightly smaller, simpler quantization. It performed nearly as well: **9/12 for B and 10/12 for C**. Its self-audit caught substantial mistakes in its own report. But B+C took approximately **107 minutes**, versus **58 minutes** for the first IQ2_XS medium run.
+When forced to stop and summarize, Qwen3.6 scored 5.5/12 and GLM 4/12.
 
-Interestingly, Q2_0 is faster in the quantization publisher's inference benchmarks. Not so on my agent tasks. The difference may involve quantization kernels, runtime configuration, or simply the model's decisions about how long to investigate. One run per configuration can't tell us which.
+A cloud frontier model (Sol 6.1) completed the same review in 6 minutes and met all eight evaluation points in that particular comparison.
 
-A later IQ2_XS run with explicit llama.cpp settings, including `--lazy-mode off`, completed B in **26m15s (9/12)** and B+C in **73m15s (19/24)**. The original **10/12** run had used only `--spec-type draft-mtp --parallel 1` as explicit llama.cpp arguments. Both used medium thinking. The newer B was faster, but the full B+C session was slower and analyzed a different repository revision, so I'm not calling that a controlled tuning result.
+The local agents' main problem was often context management. They filled the available window with code and search results, compacted their history, then reread material they had already examined.
 
-#### Thinking level: the extra time has to earn its keep
+In some runs, **17–42% of source lines read were repeats**. In the 32K runs, 74–81% of model output could be consumed by summarizing its own history.
 
-With both models able to finish, I compared the completed B+C sessions. These are individual runs under the varying conditions described above.
+Not ideal.
 
-| Model / thinking | B | C | B+C total | Score |
-|---|---:|---:|---:|---:|
-| Qwen3.6 medium | 11m54s (6/12) | 17m58s (8/12) | **29m52s** | **14/24** |
-| Qwen3.6 high | 15m16s | 29m00s | **44m16s** | **10/24** |
-| Qwen3.8 IQ2_XS low | 24m43s | 29m46s | **54m29s** | **18/24** |
-| Qwen3.8 IQ2_XS medium, first | 33m47s (10/12) | 23m45s (10/12) | **57m32s** | **20/24** |
-| Qwen3.8 IQ2_XS medium, second | 26m15s (9/12) | — | **73m15s** | **19/24** |
-| Qwen3.8 IQ2_XS high | — | — | **~2h23m** | **20/24** |
-| Qwen3.8 Q2_0 medium | ~64m (9/12) | 43m23s (10/12) | **~1h47m** | **19/24** |
+### The 256K retest
 
-![B+C review wall-clock time and subjective quality scores](assets/review-time-quality.svg)
+Increasing Qwen3.6's context to **256K** and output limit to **32K** finally allowed it to complete B+C without compaction.
 
-*Qwen3.8 uses IQ2_XS except where marked Q2_0. High and Q2_0 times are approximate. Low-power mode, OpenCode Build; subjective scores and varying tool status, not a controlled ranking.*
+It took **29m52s** at medium thinking and scored **14/24**.
 
-**The revised conclusion:** Qwen3.8 IQ2_XS **medium offers the best balance** here. Low came surprisingly close at **54m29s and 18/24**; high took **about 2h23m for 20/24**, with no clear gain over medium. Qwen3.6 high also failed to improve on medium: **44m16s and 10/24**, versus **29m52s and 14/24**. These runs suggest that more thinking is no guarantee of better judgment.
+By the end, OpenCode reported 237,519 tokens in context, about 91% of the available window.
+
+The self-audit was useful. It corrected several findings and reconsidered recommendations.
+
+But the model still confused missing references with unused code and suggested risky architectural changes without sufficient evidence.
+
+**More context solved a workflow problem, not a judgment problem.**
+
+### Serena and GitNexus: useful navigation, not automatic correctness
+
+An explicit MCP-assisted rerun used Serena to navigate symbols and inspect project memories.
+
+That improved code discovery, but the architecture report still scored **6/12**, the same as the earlier review.
+
+It was also slower: **22m46s versus 11m54s**, although tool availability, retries and loaded project memories differed.
+
+## 6. The bigger model: a real improvement
+
+Qwen3.8 Flash-Next GSQ-RCO IQ2_XS changed my view of large local models.
+
+The original low-power B+C tests produced much better architectural assessments than Qwen3.6, including stronger self-audits and more careful handling of backward compatibility.
+
+### Original low-power results
+
+| Model / thinking              |      B |      C |      Total |     Score |
+| ----------------------------- | -----: | -----: | ---------: | --------: |
+| Qwen3.6 medium                |  11:54 |  17:58 |  **29:52** |     14/24 |
+| Qwen3.6 high                  |  15:16 |  29:00 |  **44:16** |     10/24 |
+| Qwen3.8 IQ2_XS low            |  24:43 |  29:46 |  **54:29** |     18/24 |
+| Qwen3.8 IQ2_XS medium, first  |  33:47 |  23:45 |  **57:32** | **20/24** |
+| Qwen3.8 IQ2_XS medium, second |  26:15 |  47:00 |  **73:15** |     19/24 |
+| Qwen3.8 IQ2_XS high           | \~1h16 | \~1h07 | **\~2h23** |     20/24 |
+| Qwen3.8 Q2_0 medium           |  \~64m |  43:23 | **\~1h47** |     19/24 |
+
+
+
+*OpenCode Build, low-power mode. Scores are subjective; test conditions and tool status varied.*
+
+The first IQ2_XS medium run scored **20/24 in 57m32s**, compared with Qwen3.6 medium's 14/24.
+
+The difference was not just more detailed reporting. Qwen3.8 was better at distinguishing actual problems from deliberate engineering decisions.
+
+It also performed a better self-audit.
+
+High thinking took much longer without a clear quality improvement. The same pattern appeared with Qwen3.6.
+
+**Medium thinking offered the best balance in my tests.**
+
+## 7. The new tests: IQ2_XS, IQ3_S and Pi
+
+The October 27 experiments added a higher-precision quantization, a new agent framework and the higher power setting.
+
+### IQ2_XS versus IQ3_S
+
+Both quantizations use the same basic Qwen3.8 Flash-Next architecture.
+
+| Component          |      IQ2_XS |         IQ3_S |
+| ------------------ | ----------: | ------------: |
+| Main model weights |   \~39.2 GB |     \~54.8 GB |
+| N-gram component   |   \~28.8 GB |     \~28.8 GB |
+| Main model files   | **\~68 GB** | **\~83.6 GB** |
+| Separate MTP head  |    \~4.1 GB |      \~4.1 GB |
+
+The N-gram component supplies learned representations for token sequences. It is part of the trained model, not the same thing as MTP-based speculative decoding.
+
+IQ3_S used approximately **117 GB of RAM** in one run, so it fits on the Strix Halo but leaves limited headroom.
+
+In the new Lemonade logs, IQ2_XS also generated slightly faster than IQ3_S: **31.2 versus 28.1 tok/s median**.
+
+So what about quality?
+
+### Performance-mode B+C results
+
+| Model / agent           |         B |         C | Total time |     Score |
+| ----------------------- | --------: | --------: | ---------: | --------: |
+| IQ3_S · OpenCode 2.2.0  |     11:51 |     12:53 |  **24:44** |     19/24 |
+| IQ2_XS · OpenCode 2.2.0 |     16:36 |     18:52 |  **35:28** |     19/24 |
+| IQ3_S · Pi              | Completed | Completed | Not logged | **20/24** |
+
+*Medium thinking. The IQ2_XS C run included extra context-reading overhead after an intervening session. Pi doesn't record a comparable total runtime in my setup.*
+
+The IQ3_S OpenCode run was faster overall even though IQ2_XS had slightly better generation throughput in the journal sample.
+
+That illustrates why **agent wall-clock time cannot be predicted from tok/s alone**. The number of generated tokens, tool calls, context processing and exploration decisions all matter.
+
+And despite IQ3_S's higher precision, both OpenCode configurations scored **19/24**.
+
+There is no clear evidence here yet that the larger quantization delivers better reasoning quality, though it is very likely and has scored better in benchmarks.
+
+### Pi Coding Agent
+
+A LinkedIn commenter suggested trying Pi with IQ3_S.
+
+Its first B+C run scored **20/24**.
+
+Pi took a somewhat different approach from OpenCode, explored more of the legacy architecture and identified a plausible bug in an older workflow (9/12).
+
+Its self-audit then corrected several of its own assumptions and reconsidered recommendations that could break existing functionality (11/12).
+
+**One point does not make Pi the winner**, especially when the agents followed different execution flows. But it performed well enough to deserve more systematic testing.
+
+### Why self-auditing matters
+
+Across these tests, models have withdrawn or revised claims about missing CI coverage, duplicated code, security vulnerabilities, API compatibility and billing behavior.
+
+Some original recommendations would have removed data still required by deployed clients or introduced risky refactors.
+
+The self-audit often caught those mistakes.
+
+A convincing architecture review is useful. A review that can survive a serious attempt to disprove it is much more valuable.
 
 ## What I'd do today
 
-- **Use Qwen3.6-35B-A3B-MTP as the fast daily driver.** llama.cpp via Lemonade, ROCm, 256K context, and MTP with 3 draft tokens. It is much more pleasant for interactive work.
+**For quick coding tasks:** Qwen3.6-35B-A3B-MTP with llama.cpp ROCm. It's fast, handles tools well, and has enough context for most normal work.
 
-- **Use Qwen3.8 Flash-Next IQ2_XS at medium thinking for deep reviews.** Run B and C in the same session. Low is a promising alternative; high cost much more time without a clear quality gain.
+**For deep architecture reviews:** Qwen3.8 IQ2_XS or IQ3_S at medium thinking. IQ2_XS offers more memory headroom; IQ3_S is worth further testing, but hasn't demonstrated a clear quality advantage.
 
-- **Don't assume more manual inference flags are better.** The best-scoring IQ2_XS run used mostly defaults. Another configuration finished B faster but took longer for B+C, without a higher score. Record what was actually passed to `llama-server` before comparing runs.
+**For agents:** OpenCode remains my baseline. Pi is a promising minimalistic alternative.
 
-- **Raise the agent's output limit to 32K tokens** (`limit.output` in `opencode.json`, plus `--n-predict 32768` on the server if needed). OpenCode's default of 4,096 also counts thinking tokens, and with a 1,536-token reasoning budget, compaction summaries were once cut off at around 1,800 tokens and the session crashed.
+**For reliability:** Ask for counterevidence, and check consequential recommendations before implementing them. Local models at this size aren't there yet.
 
-- **Use Serena for targeted code navigation, not as an automatic truth engine.** Symbol definitions, references and persistent project memories are useful. But a failed symbol search is not proof that code is unused, and an imported constant isn't necessarily a duplicated implementation. Ask for supporting source evidence and counterevidence before accepting architectural recommendations.
+**For performance:** Use performance mode when speed matters. The improvement in my new measurements was much larger than expected.
 
-- **Big context is cheap to allocate but slow to fill** (see the subagent results above). Give agents narrow, well-specified jobs, and run subagents one after another instead of in parallel.
+**For configuration:** Avoid assuming that more manual llama.cpp flags are better. Keep track of what actually changed between runs. I also recommend a sufficiently large agent output limit — I used 32K — because thinking and compaction can exhaust small output budgets.
+
+**For parallelism:** Prefer serial subagents on this machine when contexts are long. Multiple agents compete for the same shared resources.
 
 ## Getting started
 
-To reproduce the fast daily-driver setup above:
+My local inference stack is Lemonade with llama.cpp ROCm.
 
 ```bash
-# Lemonade server (Ubuntu PPA)
-sudo add-apt-repository ppa:lemonade-team/stable && sudo apt install lemonade-server
+# Install Lemonade
+sudo add-apt-repository ppa:lemonade-team/stable
+sudo apt install lemonade-server
 
-# Backends: llama.cpp on ROCm for the iGPU, FastFlowLM for the NPU
+# Install the GPU and optional NPU backends
 lemonade backends install llamacpp:rocm
 lemonade backends install flm:npu
 
-# Sanity checks: shared GPU memory (should be ~116 GiB) and the NPU device node
-cat /sys/class/drm/card*/device/mem_info_gtt_total; ls /dev/accel
-
-# My fast daily-driver configuration
+# Fast daily-driver model
 lemonade pull Qwen3.6-35B-A3B-MTP-GGUF
+```
 
-# My deep-review model: Qwen3.8 IQ2_XS with separate MTP and vision components
+For Qwen3.8 IQ2_XS with MTP and vision:
+
+```bash
 lemonade pull user.Qwen38-IQ2XS-MTP \
   --checkpoint main ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF:IQ2_XS \
   --checkpoint draft ggml-org/Qwen3.8-Flash-Next-GGUF:mtp-Qwen3.8-Flash-Next-Q8_0.gguf \
@@ -289,33 +419,54 @@ lemonade pull user.Qwen38-IQ2XS-MTP \
   --label vision \
   --label reasoning \
   --label tool-calling
-
-# Load the fast daily driver
-lemonade load Qwen3.6-35B-A3B-MTP-GGUF --llamacpp rocm --ctx-size 262144 --save-options \
-  --llamacpp-args "--parallel 1 --flash-attn on --n-gpu-layers 999 --spec-type draft-mtp --spec-draft-n-max 3 --n-predict 32768"
 ```
 
-Point your agent at the OpenAI-compatible endpoint `http://localhost:13305/api/v1`. If you'd rather run plain llama.cpp, the same flags work with `llama-server`; add `--jinja`, plus `--mmproj mmproj-F16.gguf` for image input.
+For IQ3_S with MTP, without vision:
 
-## Wishlist
+```bash
+lemonade pull user.Qwen38-IQ3S-MTP \
+  --checkpoint main ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF:IQ3_S \
+  --checkpoint draft ggml-org/Qwen3.8-Flash-Next-GGUF:mtp-Qwen3.8-Flash-Next-Q8_0.gguf \
+  --recipe llamacpp \
+  --label mtp \
+  --label reasoning \
+  --label tool-calling
+```
 
-- **Hardware: more memory bandwidth.** 128 GB is plenty, but 256 GB/s isn't (relatively speaking). See the bandwidth table above. For the next generation of unified-memory machines, that's the spec to watch. That's basically it.
+My Qwen3.6 configuration uses a 256K context window and MTP with three draft tokens:
 
-- **Models: smart composition.** New ways to increase speed, focus on the right things, and be as reliable as the top cloud models.
+```bash
+lemonade load Qwen3.6-35B-A3B-MTP-GGUF \
+  --llamacpp rocm \
+  --ctx-size 262144 \
+  --save-options \
+  --llamacpp-args "--parallel 1 --spec-type draft-mtp --n-predict 32768"
+```
 
+The coding agents connect to Lemonade's OpenAI-compatible endpoint at `http://localhost:13305/api/v1`.
 
-## Next
+The commands reflect my tested setup; exact options and checkpoint availability can change between Lemonade versions.
 
-- **Next tests: Plan and power mode.** These B+C runs used OpenCode Build in low-power mode. Plan and a higher power setting remain untested; either could change the result. Though probably not enough to feel it's worth testing. Or?
+## Final thoughts
 
-## The fine print
+For 17,500 SEK, this computer can run models that simply wouldn't fit on most consumer GPUs (though strata according to a LinkedIn commenter reportedly makes it possible to run both IQ2 and IQ3 on 20GB VRAM + 64GB RAM at 40 tokens/second on a 4000 RTX Ada).
 
-Generation speeds include thinking tokens. Journal medians measure generation alone; OpenCode workflow rates and B+C wall-clock times include different overheads and should not be compared directly. Unless noted, each configuration was run once.
+Qwen3.6 is fast enough for everyday coding. Qwen3.8 is capable enough to produce useful deep architecture reviews, provided its conclusions are checked.
 
-The B/C rubric is a subjective reading of reports and visible logs, not an independent correctness test. In particular, a one-point difference between IQ2_XS and Q2_0 cannot establish which quantization retains more model capability. The larger model's stronger reviews are encouraging; the precise ranking needs repeated, controlled runs.
+The new tests changed two of my assumptions.
 
-Raw data is in [`data/`](data/). Regenerate the MTP chart with `python3 scripts/plot_mtp_sweep.py`.
+First, **large local models don't have to be quite as slow as my original low-power measurements suggested**.
+
+Second, memory bandwidth alone doesn't explain performance. The actual power configuration, GPU behavior, inference engine and agent workflow matter too.
+
+But the most important lesson hasn't changed:
+
+**Tokens per second measures how fast a model talks. It doesn't measure how well an agent works.**
+
+For that, I care more about whether it completes the task, supports its claims with source code, and recognizes when its own recommendations are wrong.
+
+That's where these local models are finally getting interesting.
 
 ---
 
-*Experimenting with on-device / edge AI agents.*
+*These are exploratory, mostly single-run measurements rather than a controlled leaderboard. Scores are subjective, generation rates include thinking tokens, and the low-power and performance-mode samples differ in more than the power setting. Original experimental data and plotting scripts are available in [`data/`](data/) and [`scripts/`](scripts/).*
